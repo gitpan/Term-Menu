@@ -18,7 +18,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub new {
 	my $invocant = shift;
@@ -30,7 +30,7 @@ sub new {
 		aftertext	=> "Please enter a letter or number corresponding to the option you want to choose: ",
 		nooptiontext	=> "That's not one of the available options.",
 		moreoptions	=> " or ",
-		tries		=> 0, #0 is infinite tries. if e.g. 2, user can input 2 false things untill question retuns undef.
+		tries		=> 0,
 		toomanytries	=> "You've tried too many times.",
 		hidekeys	=> 0,
 		@_,
@@ -66,7 +66,7 @@ sub menu {
 		push @lines, [(${$self}{hidekeys} ? "" : $options.$delim).$label."\n", length($options)];
 			#Length of options included to get the
 			#number of spaces that need to be included.
-		$maxoptlen = length($options) if(length($options) > $maxoptlen);
+		$maxoptlen = length($options) if(length($options) > $maxoptlen and !${$self}{hidekeys});
 	}
 	my $spaces = defined($self) ? ${$self}{spaces} : 7;
 	$spaces = $maxoptlen if($maxoptlen > $spaces);
@@ -98,7 +98,7 @@ sub menu {
 	goto QUESTION;
 	ENDSUB:
 	if(defined($self) and ${$self}{tried} >= ${$self}{tries}) {
-		print ${$self}{toomanytries} if defined ${$self}{toomanytries};
+		print ${$self}{toomanytries},"\n" if defined ${$self}{toomanytries};
 		${$self}{tried} = 0;
 		${$self}{lastval} = undef;
 		return undef;
@@ -133,24 +133,144 @@ Term::Menu - Perl extension for asking questions and printing menus at the termi
   	foobar	=>	["Go the FooBar Way!", 'f'],
 	barfoo	=>	["Or rather choose BarFoo!", 'b'],
 	test	=>	["Or test the script out.", 't'],
-	number  =>	["Choose this one if you only want to use numbers!", '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+	number  =>	["Choose this one if you only want to use numbers!", 0..9],
   );
   my $same_answer = $prompt->lastval;
   my $smallquestion = $prompt->question("What's your name? ");
 
 =head1 DESCRIPTION
 
-Term::Menu is an extension that eases the task of programming user interactivity. It helps you to get information from users, and ask what they really want. It uses basic print commands, and has no dependancies (Except for Test::Expect for the test cases). 
+Term::Menu is a highly tweakable module that eases the task of programming user interactivity. It helps you to get information from users, and ask what they really want. It uses basic print commands, and has no dependancies (Except for Test::Expect for the test cases). 
 
-=head2 EXPORT
+=head2 Sample output
 
-None by default.
+For example, if we have this script:
+
+  use Term::Menu;
+  my $menu = new Term::Menu;
+  my $answer = $menu->menu(
+  	Foo    => ["Bar", 'a'],
+  );
+  if(defined($answer)) {
+  	print "Answer was $answer\n";
+  } else {
+  	print "Answer was undefined\n";
+  }
+
+If we run it, we get this:
+
+  Please choose one of the following options.
+        a) Bar
+  Please enter a letter or number corresponding to the option you want to choose: 
+
+You see that there's just one option, named "Bar". (Look at the code if you want to know why.)
+Now we press an a, and enter. We get:
+
+  Answer was Foo
+
+Which was the key we gave to the menu. 
+Now we rerun the program, and now we enter a 'b', to test (or tease) the module. We get:
+
+  That's not one of the available options.
+  You've tried too many times.
+  Answer was undefined
+
+(See the next paragraph for more information on tweaking the module, including a way to give the user more tries)
+
+As you see, you give a has to ->menu, where the key is the string you will get back, and the value is an arrayref, 
+	where the first value is the label, and all other values are the possible keys.
+
+=head2 Tweaking the module
+You can give several arguments to the 'new' method (Or to the 'setcfg' method):
+
+  delim			- The delimiter between the possible keys and the label
+  				default: ") "
+  spaces		- The number of spaces before the possible keys.
+  				This may be set higher to keep the delimiters under each other, depending on the number
+				of possible keys and the text between them (see moreoptions)
+  				default: 7
+  beforetext		- The text that's displayed before the options.
+  				default: "Please choose one of the following options."
+  aftertext		- The text that's displayed after the options.
+  				default: "Please enter a letter or number corresponding to the option you want to choose: "
+  nooptiontext		- The text that's displayed when the user tries to enter an option that's not in the list.
+				default: "That's not one of the available options."
+  moreoptions		- If more possible options are given, this is between all possible options.
+				default: " or "
+  tries			- The number of tries the user has to enter a possible option, before the module decides
+  				to print a message (see toomanytries) and return undef. A value of 0 means unlimited.
+				default: 0
+  toomanytries		- The message that ->menu outputs when the user tried to give a non-existing option 
+  				too much times. (see tries) 
+  				default: "You've tried too many times."
+  hidekeys		- Wether to hide or show the possible keys and delimiter.
+
+=head2 About multiple options, 'spaces' and 'moreoptions'
+
+Term::Menu will always try to keep the delimiters under each other, to keep things clear and overseeable. It may adjust the 'spaces' setting, eventhough you've set it. See this program, for example:
+
+  use Term::Menu;
+  my $menu = new Term::Menu (
+          spaces  =>      5,
+  );
+  my $answer = $menu->menu(
+          Foo     => ["Bar", 'a', 'b', 'c', 'd'],
+          Bar     => ["Foo", 'e'],
+  );
+  if(defined($answer)) {
+          print "Answer was $answer\n";
+  } else {
+          print "Answer was undefined\n";
+  }
+
+As you see, the option labeled "Bar" has four answer options, 'a', 'b', 'c' and 'd'. Spaces is set to 5.
+One would expect the following menu:
+
+  Please choose one of the following options.
+       e) Foo
+  a or b or c or d) Bar
+  Please enter a letter or number corresponding to the option you want to choose: 
+
+As you see, this is not very clear. Especially, if your program grows and more options come available, this will greatly decrease overseeability. The second option, labeled "Bar", has 4 different options, and moreoptions is by default set to " or ". This gives the option string of "a or b or c or d", as you can see. The length of that string is 16, so 'spaces' is set to 16, and the option labeled "Foo" gets 15 spaces (16 minus the length of Foo's optionstring, 1) in front of it, which produces the following more overseeable menu:
+
+  Please choose one of the following options.
+                 e) Foo
+  a or b or c or d) Bar
+  Please enter a letter or number corresponding to the option you want to choose: 
+
+If you want to prevent this from happening, you have to set 'hidekeys' to 1, and include the option in the label itself, as in this program:
+
+  use Term::Menu;
+  my $menu = new Term::Menu (
+          spaces   =>     5,
+          hidekeys =>     1,
+  );
+  my $answer = $menu->menu(
+          Foo     => ["a, b, c or d: Bar", 'a', 'b', 'c', 'd'],
+          Bar     => ["e: Foo", 'e'],
+  );
+  if(defined($answer)) {
+          print "Answer was $answer\n";
+  } else {
+          print "Answer was undefined\n";
+  }
+
+This will produce the following output:
+
+  Please choose one of the following options.
+      e: Foo
+  a, b, c or d: Bar
+  Please enter a letter or number corresponding to the option you want to choose: 
+
+This is only possible from version 0.04, as version 0.03 had a bug that it still changed the 'spaces' option, eventhough 'hidekeys' was set to 1.   
 
 =head1 AUTHOR
 
 Sjors Gielen, E<lt>sjorsgielen@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
+
+This module is released under the same license as the perl 5.8.4 distribution.
 
 Copyright (C) 2006 by Sjors Gielen
 

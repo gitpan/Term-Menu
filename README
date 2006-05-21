@@ -18,14 +18,12 @@ This module requires these other modules and libraries:
 
   Test::Expect (to test)
 
-COPYRIGHT AND LICENCE
+COPYRIGHT AND LICENSE
 
-Somebody please tell me a good license to take. I really don't know.
+This module is released under the same license as the perl 5.8.4 distribution.
 
 Copyright (C) 2006 by Sjors Gielen
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.4 or,
 at your option, any later version of Perl 5 you may have available.
-
-
