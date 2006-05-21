@@ -1,0 +1,12 @@
+Revision history for Perl extension Term::Menu.
+
+0.03  Sun May 21 10:30:00 2006
+	- Renamed module to Term::Menu, because Term::Prompt already exists
+0.02  Sat May 20 20:56:00 2006
+	- Much fixes
+	- Made a nice test case
+
+0.01  Tue May 16 20:05:22 2006
+	- original version; created by h2xs 1.23 with options
+		-A -X -n Term::Prompt
+
