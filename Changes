@@ -1,5 +1,9 @@
 Revision history for Perl extension Term::Menu.
 
+0.05  Thu Jun 08 18:57:00 2006
+	- Removed dependancy for Test::Expect
+	- Added check for Test::Expect to tests, if not found, all other tests are skipped.
+
 0.04  Sun May 21 17:52:00 2006
 	- The "too many tries" message now also outputs a newline at the end
 	- The spaces aren't changed if hidekeys is 1 now.
