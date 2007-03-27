@@ -1,5 +1,10 @@
 Revision history for Perl extension Term::Menu.
 
+0.06  Tue Mar 27 09:23:00 2006
+	- Moved the directory name Term-Menu to Term-Menu-0.05
+	- Term::Menu now holds an array instead of a hash to preserve the order
+	- Both of the changes were thanks to a hint from Kevin Montuori, thanks!
+
 0.05  Thu Jun 08 18:57:00 2006
 	- Removed dependancy for Test::Expect
 	- Added check for Test::Expect to tests, if not found, all other tests are skipped.

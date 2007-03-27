@@ -5,20 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-require Exporter;
-
-our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-	
-);
-
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub new {
 	my $invocant = shift;
@@ -47,17 +34,19 @@ sub setcfg {
 	croak("Error: setcfg is an instance method!") if(!ref $self);
 	%$self = (%$self, @_);
 }
-	
+
 sub menu {
 	my $self = shift; # Myself.
 	$self = undef if(!ref($self)); # Ignore myself if it's not an instance
 	my %options = @_; # The keys and corresponding options
+	my $i = 0; #This line and the line below were added by Kevin Montuori
+	my @options = grep { ++$i % 2 } @_;
 	my $delim = defined($self) ? ${$self}{delim} : ") ";
 			# The delimiter between keys and label
 	my @lines;	# The lines of the options that need to be printed
 	my %keyvals;	# A hash that holds what keys should return what values.
 	my $maxoptlen = 0; # Max length of keys that correspond to this value.
-	foreach(keys %options) {
+	foreach(@options) {
 		my $value = $_;
 		my $label = shift @{$options{$_}};
 		my @keys  = @{$options{$_}};
@@ -140,7 +129,11 @@ Term::Menu - Perl extension for asking questions and printing menus at the termi
 
 =head1 DESCRIPTION
 
-Term::Menu is a highly tweakable module that eases the task of programming user interactivity. It helps you to get information from users, and ask what they really want. It uses basic print commands, and has no dependancies (Except for Test::Expect for the test cases). 
+Term::Menu is a highly tweakable module that eases the task of programming
+user interactivity. It helps you to get information from users, and to ask
+what they really want. It uses basic print commands, and has no
+dependancies (But you might want to install the optional Test::Expect
+for the test cases). 
 
 =head2 Sample output
 
@@ -177,10 +170,11 @@ Now we rerun the program, and now we enter a 'b', to test (or tease) the module.
 
 (See the next paragraph for more information on tweaking the module, including a way to give the user more tries)
 
-As you see, you give a has to ->menu, where the key is the string you will get back, and the value is an arrayref, 
+As you see, you give a hash to ->menu, where the key is the string you will get back, and the value is an arrayref, 
 	where the first value is the label, and all other values are the possible keys.
 
 =head2 Tweaking the module
+
 You can give several arguments to the 'new' method (Or to the 'setcfg' method):
 
   delim			- The delimiter between the possible keys and the label
@@ -224,14 +218,14 @@ Term::Menu will always try to keep the delimiters under each other, to keep thin
   }
 
 As you see, the option labeled "Bar" has four answer options, 'a', 'b', 'c' and 'd'. Spaces is set to 5.
-One would expect the following menu:
+You would expect the following menu:
 
   Please choose one of the following options.
        e) Foo
   a or b or c or d) Bar
   Please enter a letter or number corresponding to the option you want to choose: 
 
-As you see, this is not very clear. Especially, if your program grows and more options come available, this will greatly decrease overseeability. The second option, labeled "Bar", has 4 different options, and moreoptions is by default set to " or ". This gives the option string of "a or b or c or d", as you can see. The length of that string is 16, so 'spaces' is set to 16, and the option labeled "Foo" gets 15 spaces (16 minus the length of Foo's optionstring, 1) in front of it, which produces the following more overseeable menu:
+As you see, this is ugly not very clear. Especially, if your program grows and more options come available, this will greatly decrease overseeability. The second option, labeled "Bar", has 4 different options, and moreoptions is by default set to " or ". This gives the option string of "a or b or c or d", as you can see. The length of that string is 16, so 'spaces' is set to 16, and the option labeled "Foo" gets 15 spaces (16 minus the length of Foo's optionstring, 1) in front of it, which produces the following more overseeable menu:
 
   Please choose one of the following options.
                  e) Foo

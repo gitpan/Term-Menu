@@ -1,4 +1,4 @@
-Term-Menu version 0.03
+Term-Menu version 0.06
 ========================
 
 Term::Menu - Print a menu to the screen and ask for an answer.
@@ -14,7 +14,7 @@ To install this module type the following:
 
 DEPENDENCIES
 
-This module requires these other modules and libraries:
+This module requires no modules, but the following modules are optional:
 
   Test::Expect (to test)
 
