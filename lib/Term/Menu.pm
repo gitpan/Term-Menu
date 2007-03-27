@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 sub new {
 	my $invocant = shift;
@@ -78,9 +78,11 @@ sub menu {
 		}
 	}
 	if(defined($self)) {
-		print ${$self}{nooptiontext},"\n";
-		${$self}{tried}++ if(${$self}{tries});
-		if(${$self}{tried} >= ${$self}{tries}) {
+		print $self->{nooptiontext},"\n";
+		# The line below was a hint by Stephen Davies, thanks!
+		$self->{tried} = 0 if(!defined($self->{tried}));
+		$self->{tried}++ if($self->{tries});
+		if($self->{tried} >= $self->{tries}) {
 			goto ENDSUB;
 		}
 	}
@@ -171,7 +173,10 @@ Now we rerun the program, and now we enter a 'b', to test (or tease) the module.
 (See the next paragraph for more information on tweaking the module, including a way to give the user more tries)
 
 As you see, you give a hash to ->menu, where the key is the string you will get back, and the value is an arrayref, 
-	where the first value is the label, and all other values are the possible keys.
+where the first value is the label, and all other values are the possible keys.
+
+In 0.06 and later, this internally is no longer a hash but it is an array. This does not change the way you give
+parameters.
 
 =head2 Tweaking the module
 
@@ -261,6 +266,13 @@ This is only possible from version 0.04, as version 0.03 had a bug that it still
 =head1 AUTHOR
 
 Sjors Gielen, E<lt>sjorsgielen@gmail.comE<gt>
+
+The following people helped me with this module and gave some hints:
+
+Kevin Montuori, Stephen Davies, and ofcourse the great experts at irc.freenode.org #perl !
+
+Please tell me if I've forgotten to mention you here. Also please e-mail me or tell me on IRC 
+when you're missing some feature or found a bug.
 
 =head1 COPYRIGHT AND LICENSE
 

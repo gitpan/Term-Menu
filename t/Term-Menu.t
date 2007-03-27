@@ -1,33 +1,38 @@
-use Test::More tests => 8;
-BEGIN { use_ok('Term::Menu'); };
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+use Test::More tests => 10;
 
-eval {
-	require Test::Expect;
-	Test::Expect->import();
-};
-
+BEGIN { eval("use Term::Menu"); ok(!$@, "Load Term::Menu") };
 SKIP: {
-skip "Test::Expect wasn\'t found", 7 if $@;
+	eval("use Test::Expect");
+	skip "Couldn't load Test::Expect",9 if $@;
 
-## First we find the Expect.pl file.
-my $command = "perl ";
-if(-e "./Expect.pl") {
-	$command .= "./Expect.pl";
-} elsif(-e "../Expect.pl") {
-	$command .= "../Expect.pl";
-} elsif(-e "./t/Expect.pl") {
-	$command .= "./t/Expect.pl";
-} else {
-	plan skip_all => "Can't find the Expect file";
-}
-
-expect_run(
-	command => $command,
-	prompt	=> "test: ",
-	quit	=> "q",
-);
-
-expect("a", "ok", "Giving a good answer");
-expect("5", "ok", "Giving a bad answer");
-expect("abcdefg", "ok", "Asking a small question");
+	# This is required by Test::More:
+	SKIP: {
+		## First we find the Expect.pl file.
+		my $command = "perl ";
+		for(qw( ./ ../ ../../ ./t/ ../t/ ../../t/ )) {
+			if(-e $_."Expect.pl") {
+				$command .= $_."Expect.pl";
+				last;
+			}
+		}
+		
+		if($command eq "perl ") {
+			plan skip_all => "Can't find the Expect file";
+		}
+		
+		expect_run(
+			command => $command,
+			prompt	=> "test: ",
+			quit	=> "q",
+		);
+		
+		expect("a", "ok", "Giving a good answer");
+		expect("5", "error", "Giving a bad answer");
+		expect_send("abcdefg", "Asking a small question");
+		expect_like(qr/ok\n\na\)\nb\)/, "Giving a first");
+		expect("b", "ok", "Answering the order question");
+	}
 }

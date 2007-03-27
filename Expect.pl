@@ -30,7 +30,7 @@ if (defined $return and $return eq $menu->lastval and $return eq "ok") {
 
 ##### Ask for an answer and print ok or error again ######
 ## Test what happens if a bad answer is given
-my @pos_keys = qw(1 2 3 4 6 7 8 9 0 a b c d e f g h i j k l m n o p q r s t u v w x y z);
+my @pos_keys = (0..9,'a'..'z','A'..'Z');
 $return = $menu->menu(
 	ok	=>	["",@pos_keys],
 );
@@ -38,8 +38,9 @@ if(!defined $return and !defined $menu->lastval) {
 	print "ok\n";
 } else {
 	print "error\n";
-	exit;
+	# DON'T exit here!
 }
+sleep 1;
 
 ##### Print a normal question and print ok or error again ######
 ## Test the normal question
@@ -52,6 +53,26 @@ if(defined $return and $return eq $lastval and $return eq "abcdefg") {
 	print "error\n";
 	exit;
 }
+sleep 1;
+
+###### Test the order #####
+$menu->setcfg(
+        delim => ")",
+        hidekeys => 0,
+);
+$return = $menu->menu(
+        ok1 => ["", "a"],
+        ok2 => ["", "b"],
+);
+chomp $return if defined $return;
+chomp (my $lastval = $menu->lastval);
+if(defined($return) and $return eq $lastval and $return eq "ok2") {
+        print "ok\n";
+} else {
+        print "error\n";
+        exit;
+}
+sleep 1;
 
 ##### Quit #####
 ## Quit Expect interface
@@ -63,3 +84,4 @@ if(defined $return and $return eq "quit") {
 	print "error\n";
 	exit;
 }
+
