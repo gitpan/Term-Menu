@@ -1,11 +1,11 @@
 package Term::Menu;
 
-use 5.006;
+use 5.000;
 use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub new {
 	my $invocant = shift;
@@ -48,8 +48,8 @@ sub menu {
 	my $maxoptlen = 0; # Max length of keys that correspond to this value.
 	foreach(@options) {
 		my $value = $_;
-		my $label = shift @{$options{$_}};
 		my @keys  = @{$options{$_}};
+		my $label = shift @keys;
 		my $options = join ((defined $self ? ${$self}{moreoptions} : ' or '), @keys);
 		$keyvals{$_} = $value foreach(@keys);
 		push @lines, [(${$self}{hidekeys} ? "" : $options.$delim).$label."\n", length($options)];
@@ -61,8 +61,7 @@ sub menu {
 	$spaces = $maxoptlen if($maxoptlen > $spaces);
 	print ${$self}{beforetext},"\n" if defined $self;
 	foreach (@lines) {
-		my $line = shift @$_;
-		my $len = shift @$_;
+		my ($line, $len) = @$_;
 		my $nspace = $spaces - $len;
 		print " " x $nspace, $line;
 	}
