@@ -40,7 +40,6 @@ if(!defined $return and !defined $menu->lastval) {
 	print "error\n";
 	# DON'T exit here!
 }
-sleep 1;
 
 ##### Print a normal question and print ok or error again ######
 ## Test the normal question
@@ -53,7 +52,6 @@ if(defined $return and $return eq $lastval and $return eq "abcdefg") {
 	print "error\n";
 	exit;
 }
-sleep 1;
 
 ###### Test the order #####
 $menu->setcfg(
@@ -72,7 +70,6 @@ if(defined($return) and $return eq $lastval and $return eq "ok2") {
         print "error\n";
         exit;
 }
-sleep 1;
 
 ##### Quit #####
 ## Quit Expect interface

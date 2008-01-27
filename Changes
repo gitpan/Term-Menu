@@ -1,5 +1,14 @@
 Revision history for Perl extension Term::Menu.
 
+0.09  Sun Jan 27 13:21:00 2007
+	- Added a table print option. May be going to rename this module, since printing a menu is no longer
+	  the only thing it does.
+	- Also removed the goto's. menu() is still really ugly, but it's just a bit less ugly now. I
+	  wrote it when I just knew Perl, so it contains a few things I really have to laugh about, now.
+	- Removed sleep statements from Expect.pl.
+	- Split the tests from t/Term_Menu.t into just loading Term::Menu and actually checking the menu with
+	  Test::Expect in t/menu.t.
+
 0.08  Sat Apr  7 18:06:00 2007
 	- The module now no more uses shift, so if you call ->menu() in a loop, it won't modify your references.
 

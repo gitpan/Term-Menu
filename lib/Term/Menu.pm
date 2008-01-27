@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 sub new {
 	my $invocant = shift;
@@ -36,16 +36,22 @@ sub setcfg {
 }
 
 sub menu {
-	my $self = shift; # Myself.
-	$self = undef if(!ref($self)); # Ignore myself if it's not an instance
+	my $self = shift;
+
+	$self = Term::Menu->new() if(!defined($self) or !ref($self)); # Create a default self if we didn't get one
+
 	my %options = @_; # The keys and corresponding options
+	
 	my $i = 0; #This line and the line below were added by Kevin Montuori
 	my @options = grep { ++$i % 2 } @_;
+	
 	my $delim = defined($self) ? ${$self}{delim} : ") ";
 			# The delimiter between keys and label
+	
 	my @lines;	# The lines of the options that need to be printed
 	my %keyvals;	# A hash that holds what keys should return what values.
 	my $maxoptlen = 0; # Max length of keys that correspond to this value.
+	
 	foreach(@options) {
 		my $value = $_;
 		my @keys  = @{$options{$_}};
@@ -65,28 +71,26 @@ sub menu {
 		my $nspace = $spaces - $len;
 		print " " x $nspace, $line;
 	}
-	QUESTION:
-	print ${$self}{aftertext} if defined $self;
-	my $answ = <STDIN>;
-	chomp $answ;
-	foreach(keys %keyvals) {
-		if($answ eq $_) {
-			${$self}{lastval} = $keyvals{$_};
-			return $keyvals{$_};
-			goto ENDSUB; #Escape if return failed. (?)
+	while(1) {
+		print ${$self}{aftertext} if defined $self;
+		my $answ = <STDIN>;
+		chomp $answ;
+		foreach(keys %keyvals) {
+			if($answ eq $_) {
+				${$self}{lastval} = $keyvals{$_} if defined $self;
+				return $keyvals{$_};
+			}
+		}
+		if(defined($self)) {
+			print $self->{nooptiontext},"\n";
+			# The line below was a hint by Stephen Davies, thanks!
+			$self->{tried} = 0 if(!defined($self->{tried}));
+			$self->{tried}++ if($self->{tries});
+			if($self->{tried} >= $self->{tries}) {
+				last;
+			}
 		}
 	}
-	if(defined($self)) {
-		print $self->{nooptiontext},"\n";
-		# The line below was a hint by Stephen Davies, thanks!
-		$self->{tried} = 0 if(!defined($self->{tried}));
-		$self->{tried}++ if($self->{tries});
-		if($self->{tried} >= $self->{tries}) {
-			goto ENDSUB;
-		}
-	}
-	goto QUESTION;
-	ENDSUB:
 	if(defined($self) and ${$self}{tried} >= ${$self}{tries}) {
 		print ${$self}{toomanytries},"\n" if defined ${$self}{toomanytries};
 		${$self}{tried} = 0;
@@ -108,6 +112,54 @@ sub lastval {
 	croak("Error: lastval is an instance method") if(!ref($self));
 	return ${$self}{lastval};
 }
+
+sub table {
+	my ($pkg, $heads, $contents) = @_;
+
+	# We first get a list of columns and their sizes.
+	# We only print as many columns as there are things in $heads.
+	my $column_sizes = [];
+	for(my $i = 0; $i < @$heads; ++$i) {
+		# Max size of this column...
+		my $size = length($heads->[$i]);
+		foreach my $row (@$contents) {
+			$size = length($row->[$i])
+				if(length($row->[$i]) > $size);
+		}
+		$column_sizes->[$i] = $size;
+	}
+
+	# Now we start printing.
+	# Line 1, 3 and n: delimiters
+	my $delimline = "+";
+	foreach(@$column_sizes) {
+		$delimline .= ("-" x $_) . "+";
+	}
+	$delimline .= "\n";
+	print $delimline;
+
+	# Line 2: column names
+	my $nameline = "|";
+	for(my $i = 0; $i < @$heads; ++$i) {
+		# Name of the head, plus as many spaces as needed.
+		$nameline .= $heads->[$i] . (" " x ($column_sizes->[$i] - length($heads->[$i]))) . "|";
+	}
+	$nameline .= "\n";
+	print $nameline;
+
+	print $delimline;
+
+	foreach my $content (@$contents) {
+		my $contentline = "|";
+		for(my $i = 0; $i < @$heads; ++$i) {
+			$contentline .= $content->[$i] . (" " x ($column_sizes->[$i] - length($content->[$i]))) . "|";
+		}
+		$contentline .= "\n";
+		print $contentline;
+	}
+	print $delimline;
+}
+
 1;
 __END__
 
@@ -127,6 +179,10 @@ Term::Menu - Perl extension for asking questions and printing menus at the termi
   );
   my $same_answer = $prompt->lastval;
   my $smallquestion = $prompt->question("What's your name? ");
+  $prompt->table(
+  	['id', 'name'],
+	[[1, "Perl"], [2, "Ruby"], [3, "C++"], [4, "C"]]
+  );
 
 =head1 DESCRIPTION
 
@@ -261,6 +317,33 @@ This will produce the following output:
   Please enter a letter or number corresponding to the option you want to choose: 
 
 This is only possible from version 0.04, as version 0.03 had a bug that it still changed the 'spaces' option, eventhough 'hidekeys' was set to 1.   
+
+=head2 Printing tables
+
+Tables is an added feature since Term::Menu 0.09. It allows you to print a nicely formatted menu based on a
+list of array references.
+
+For example, see this script:
+
+  Term::Menu->table(
+  	[qw(id name mark OK)],
+	[
+		[qw(1 dazjorz A yes)],
+		[qw(2 f00li5h A yes)],
+		[qw(3 buu B yes)],
+		[qw(4 rindolf C no)],
+	]);
+
+This will give the following output:
+
+   +--+-------+----+---+
+   |id|name   |mark|OK |
+   +--+-------+----+---+
+   |1 |dazjorz|A   |yes|
+   |2 |f00li5h|A   |yes|
+   |3 |buu    |B   |yes|
+   |4 |rindolf|C   |no |
+   +--+-------+----+---+
 
 =head1 AUTHOR
 
