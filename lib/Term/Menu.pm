@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 sub new {
 	my $invocant = shift;
@@ -38,15 +38,17 @@ sub setcfg {
 sub menu {
 	my $self = shift;
 
-	$self = Term::Menu->new() if(!defined($self) or !ref($self)); # Create a default self if we didn't get one
+	# Create a default self if we didn't get one
+	$self = Term::Menu->new() if(!defined($self) or !ref($self));
 
-	my %options = @_; # The keys and corresponding options
-	
-	my $i = 0; #This line and the line below were added by Kevin Montuori
+	# Options by name
+	my %options = @_;
+
+	# Options in order
+	my $i = 0;
 	my @options = grep { ++$i % 2 } @_;
 	
-	my $delim = defined($self) ? ${$self}{delim} : ") ";
-			# The delimiter between keys and label
+	my $delim = $self->{delim}; # The delimiter between keys and label
 	
 	my @lines;	# The lines of the options that need to be printed
 	my %keyvals;	# A hash that holds what keys should return what values.
@@ -56,45 +58,42 @@ sub menu {
 		my $value = $_;
 		my @keys  = @{$options{$_}};
 		my $label = shift @keys;
-		my $options = join ((defined $self ? ${$self}{moreoptions} : ' or '), @keys);
+		my $options = join ($self->{moreoptions}, @keys);
 		$keyvals{$_} = $value foreach(@keys);
-		push @lines, [(${$self}{hidekeys} ? "" : $options.$delim).$label."\n", length($options)];
+		push @lines, [($self->{hidekeys} ? "" : $options.$delim).$label."\n", length($options)];
 			#Length of options included to get the
 			#number of spaces that need to be included.
-		$maxoptlen = length($options) if(length($options) > $maxoptlen and !${$self}{hidekeys});
+		$maxoptlen = length($options) if(length($options) > $maxoptlen and !$self->{hidekeys});
 	}
-	my $spaces = defined($self) ? ${$self}{spaces} : 7;
+	my $spaces = $self->{spaces};
 	$spaces = $maxoptlen if($maxoptlen > $spaces);
-	print ${$self}{beforetext},"\n" if defined $self;
+	print $self->{beforetext},"\n" if defined $self->{beforetext};
 	foreach (@lines) {
 		my ($line, $len) = @$_;
 		my $nspace = $spaces - $len;
 		print " " x $nspace, $line;
 	}
 	while(1) {
-		print ${$self}{aftertext} if defined $self;
+		print $self->{aftertext} if defined $self->{aftertext};
 		my $answ = <STDIN>;
 		chomp $answ;
 		foreach(keys %keyvals) {
 			if($answ eq $_) {
-				${$self}{lastval} = $keyvals{$_} if defined $self;
+				$self->{lastval} = $keyvals{$_};
 				return $keyvals{$_};
 			}
 		}
-		if(defined($self)) {
-			print $self->{nooptiontext},"\n";
-			# The line below was a hint by Stephen Davies, thanks!
-			$self->{tried} = 0 if(!defined($self->{tried}));
-			$self->{tried}++ if($self->{tries});
-			if($self->{tried} >= $self->{tries}) {
-				last;
-			}
+		print $self->{nooptiontext},"\n" if defined $self->{nooptiontext};
+		$self->{tried} ||= 0;
+		$self->{tried}++;
+		if($self->{tried} >= $self->{tries} and $self->{tries} != 0) {
+			last;
 		}
 	}
-	if(defined($self) and ${$self}{tried} >= ${$self}{tries}) {
-		print ${$self}{toomanytries},"\n" if defined ${$self}{toomanytries};
-		${$self}{tried} = 0;
-		${$self}{lastval} = undef;
+	if($self->{tried} >= $self->{tries} and $self->{tries} != 0) {
+		print $self->{toomanytries},"\n" if defined $self->{toomanytries};
+		$self->{tried} = 0;
+		$self->{lastval} = undef;
 		return undef;
 	}
 }
@@ -103,14 +102,14 @@ sub question {
 	my ($self, $question) = @_;
 	print $question;
 	my $answer = <STDIN>;
-	${$self}{lastval} = $answer;
+	$self->{lastval} = $answer;
 	return $answer;
 }
 
 sub lastval {
 	my $self = shift;
 	croak("Error: lastval is an instance method") if(!ref($self));
-	return ${$self}{lastval};
+	return $self->{lastval};
 }
 
 sub table {
@@ -227,11 +226,13 @@ Now we rerun the program, and now we enter a 'b', to test (or tease) the module.
 
 (See the next paragraph for more information on tweaking the module, including a way to give the user more tries)
 
-As you see, you give a hash to ->menu, where the key is the string you will get back, and the value is an arrayref, 
-where the first value is the label, and all other values are the possible keys.
-
-In 0.06 and later, this internally is no longer a hash but it is an array. This does not change the way you give
-parameters.
+As you see, you give a hash to ->menu. The key is the string you will get back,
+and the value is an arrayref; in this arrayref, the first value is the label,
+and all other values are the possible keys. (In practice, this hash is secretly
+an array so that the values appear in the order given. If you want to guarantee
+this yourself, make sure to either use hard-coded options or keep the list as
+an array. In this array, all even numbered items are the keys, all odd numbered
+items are the label and key references.)
 
 =head2 Tweaking the module
 
@@ -347,20 +348,16 @@ This will give the following output:
 
 =head1 AUTHOR
 
-Sjors Gielen, E<lt>sjorsgielen@gmail.comE<gt>
+Sjors Gielen, E<lt>cpan-termmenu@sjor.sgE<gt>
 
-The following people helped me with this module and gave some hints:
-
-Kevin Montuori, Stephen Davies, and ofcourse the great experts at irc.freenode.org #perl !
-
-Please tell me if I've forgotten to mention you here. Also please e-mail me or tell me on IRC 
-when you're missing some feature or found a bug.
+Special thanks to Kevin Montuori, Stephen Davies, Jeffrey D Johnson irc.freenode.org #perl for giving
+hints or fixing bugs.
 
 =head1 COPYRIGHT AND LICENSE
 
 This module is released under the same license as the perl 5.8.4 distribution.
 
-Copyright (C) 2006 by Sjors Gielen
+Copyright (C) 2006-2014 by Sjors Gielen
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.4 or,

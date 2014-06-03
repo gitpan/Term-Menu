@@ -1,5 +1,11 @@
 Revision history for Perl extension Term::Menu.
 
+0.10  Tue Jun 03 13:05:00 2014
+	- When tries == 0, allow the user to try giving an answer infinitely
+	  as per documentation.
+	- Improve code style a bit.
+	- Improve documentation on option ordering.
+
 0.09  Sun Jan 27 13:21:00 2007
 	- Added a table print option. May be going to rename this module, since printing a menu is no longer
 	  the only thing it does.

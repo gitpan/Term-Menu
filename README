@@ -1,4 +1,4 @@
-Term-Menu version 0.09
+Term-Menu version 0.10
 ========================
 
 Term::Menu - Print a menu to the screen and ask for an answer.
@@ -20,7 +20,7 @@ This module requires no modules, but the following modules are optional:
 
 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by Sjors Gielen
+Copyright (C) 2006-2014 by Sjors Gielen
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.4 or,
